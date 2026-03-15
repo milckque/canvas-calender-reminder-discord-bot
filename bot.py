@@ -13,11 +13,14 @@ from reminders import ReminderScheduler, get_tz, fmt_due
 
 load_dotenv()
 
+os.makedirs("data", exist_ok=True)
+os.makedirs("logs", exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler("bot.log"),
+        logging.FileHandler("logs/bot.log"),
         logging.StreamHandler()
     ]
 )
@@ -27,7 +30,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot       = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-db        = Database("data.db")
+db        = Database("data/data.db")
 canvas    = CanvasCalendar()
 scheduler = ReminderScheduler(db, canvas)
 

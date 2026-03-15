@@ -1,0 +1,10 @@
+services:
+  canvas-bot:
+    build: .
+    container_name: canvas-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
