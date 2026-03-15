@@ -29,7 +29,7 @@ log = logging.getLogger("bot")
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot       = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+bot       = commands.Bot(command_prefix="!uni ", intents=intents, help_command=None)
 db        = Database("data/data.db")
 canvas    = CanvasCalendar()
 scheduler = ReminderScheduler(db, canvas)
@@ -45,7 +45,7 @@ async def _require_user(ctx) -> dict | None:
     if not user:
         await ctx.author.send(
             "❌ You haven't linked your Canvas calendar yet.\n"
-            "Run `!setup <ical-url>` to get started, or `!help` for instructions."
+            "Run `!uni setup <ical-url>` to get started, or `!uni help` for instructions."
         )
     return user
 
@@ -113,8 +113,8 @@ async def setup(ctx, ical_url: str = None):
         f"✅ **Calendar linked!**\n\n"
         f"Found **{len(assignments)}** total assignments, **{len(upcoming)}** upcoming.\n\n"
         f"Default reminders: 1 week · 3 days · 1 day · day-of (Melbourne time)\n"
-        f"Customise with `!reminders` · Change timezone with `!timezone`\n\n"
-        f"Run `!assignments` to see your upcoming work, or `!help` for all commands."
+        f"Customise with `!uni reminders` · Change timezone with `!uni timezone`\n\n"
+        f"Run `!uni assignments` to see your upcoming work, or `!uni help` for all commands."
     )
     log.info(f"User {ctx.author.id} registered ({len(assignments)} assignments).")
 
@@ -135,7 +135,7 @@ async def assignments_cmd(ctx):
     await ctx.author.send(await _format_assignment_list(
         ctx.author.id, upcoming[:15], tz,
         title="📚 Your Upcoming Assignments",
-        footer="Run `!done` to mark an assignment as completed."
+        footer="Run `!uni done` to mark an assignment as completed."
     ))
 
 
@@ -179,7 +179,7 @@ async def upcoming_cmd(ctx, days: int = 7):
             !upcoming 30    — next 30 days
     """
     if days < 1 or days > 90:
-        await ctx.author.send("❌ Please specify between 1 and 90 days. E.g. `!upcoming 14`")
+        await ctx.author.send("❌ Please specify between 1 and 90 days. E.g. `!uni upcoming 14`")
         return
 
     user = await _require_user(ctx)
@@ -200,7 +200,7 @@ async def upcoming_cmd(ctx, days: int = 7):
     await ctx.author.send(await _format_assignment_list(
         ctx.author.id, upcoming[:20], tz,
         title=f"📅 Due in the Next {days} Days",
-        footer="Run `!done` to mark an assignment as completed."
+        footer="Run `!uni done` to mark an assignment as completed."
     ))
 
 
@@ -227,19 +227,19 @@ async def done_cmd(ctx, number: int = None):
         await ctx.author.send(await _format_assignment_list(
             ctx.author.id, upcoming, tz,
             title="✅ Mark an Assignment as Done",
-            footer="Reply with `!done <number>` to silence reminders for that assignment."
+            footer="Reply with `!uni done <number>` to silence reminders for that assignment."
         ))
         return
 
     if not (1 <= number <= len(upcoming)):
-        await ctx.author.send(f"❌ Pick a number between 1 and {len(upcoming)}. Run `!done` to see the list.")
+        await ctx.author.send(f"❌ Pick a number between 1 and {len(upcoming)}. Run `!uni done` to see the list.")
         return
 
     assignment = upcoming[number - 1]
     if await db.is_completed(ctx.author.id, assignment["uid"]):
         await ctx.author.send(
             f"✅ **{assignment['title']}** is already marked as completed.\n"
-            f"Run `!uncomplete` to restore reminders."
+            f"Run `!uni uncomplete` to restore reminders."
         )
         return
 
@@ -247,7 +247,7 @@ async def done_cmd(ctx, number: int = None):
     await ctx.author.send(
         f"✅ **{assignment['title']}** marked as completed!\n"
         f"Due: {fmt_due(assignment['due'], tz)}\n\n"
-        f"No more reminders for this one. Run `!uncomplete` to undo."
+        f"No more reminders for this one. Run `!uni uncomplete` to undo."
     )
     log.info(f"User {ctx.author.id} completed '{assignment['title']}'")
 
@@ -266,7 +266,7 @@ async def uncomplete_cmd(ctx, number: int = None):
 
     if number is None:
         lines = ["↩️ **Completed Assignments**\n",
-                 "Run `!uncomplete <number>` to restore reminders:\n"]
+                 "Run `!uni uncomplete <number>` to restore reminders:\n"]
         for i, c in enumerate(completed, 1):
             lines.append(f"`{i}.` ~~{c['title']}~~")
         await ctx.author.send("\n".join(lines))
@@ -303,7 +303,7 @@ async def reminders_cmd(ctx, *args):
         for key in ALL_REMINDER_WINDOWS:
             status = "✅" if key in current else "❌"
             lines.append(f"{status} `{key}` — {WINDOW_LABELS[key]}")
-        lines.append("\nTo change: `!reminders 7d 1d 0d` (space-separated)\nTo reset: `!reminders all`")
+        lines.append("\nTo change: `!uni reminders 7d 1d 0d` (space-separated)\nTo reset: `!uni reminders all`")
         await ctx.author.send("\n".join(lines))
         return
 
@@ -356,7 +356,7 @@ async def timezone_cmd(ctx, tz_str: str = None):
         await ctx.author.send(
             f"🕐 Your timezone is set to **{current}**\n"
             f"Current local time: **{now_local.strftime('%I:%M %p, %a %d %b')}**\n\n"
-            f"To change it: `!timezone <tz-name>` (e.g. `!timezone America/New_York`)"
+            f"To change it: `!uni timezone <tz-name>` (e.g. `!uni timezone America/New_York`)"
         )
         return
 
@@ -400,7 +400,7 @@ async def remove(ctx):
     await db.delete_user(ctx.author.id)
     await ctx.author.send(
         "🗑️ Calendar unlinked and all reminders stopped.\n"
-        "Run `!setup <ical-url>` any time to reconnect."
+        "Run `!uni setup <ical-url>` any time to reconnect."
     )
     log.info(f"User {ctx.author.id} removed their calendar.")
 
@@ -424,7 +424,7 @@ async def status(ctx):
         f"🔔 Active reminders: **{window_str}**\n"
         f"📬 Reminders sent: **{reminders_sent}**\n"
         f"✅ Assignments marked done: **{len(completed)}**\n\n"
-        f"`!reminders` to change windows · `!timezone` to change timezone"
+        f"`!uni reminders` to change windows · `!uni timezone` to change timezone"
     )
 
 
@@ -443,30 +443,30 @@ async def help_cmd(ctx):
     embed.add_field(
         name="⚙️ Setup",
         value=(
-            "`!setup <url>` — Link your Canvas iCal calendar\n"
-            "`!timezone` — View or set your timezone (default: Melbourne)\n"
-            "`!reminders` — Choose which reminder windows you receive\n"
-            "`!status` — View your current settings\n"
-            "`!remove` — Unlink calendar and stop all reminders"
+            "`!uni setup <url>` — Link your Canvas iCal calendar\n"
+            "`!uni timezone` — View or set your timezone (default: Melbourne)\n"
+            "`!uni reminders` — Choose which reminder windows you receive\n"
+            "`!uni status` — View your current settings\n"
+            "`!uni remove` — Unlink calendar and stop all reminders"
         ),
         inline=False,
     )
     embed.add_field(
         name="📋 Viewing Assignments",
         value=(
-            "`!assignments` — All upcoming assignments\n"
-            "`!today` — Due today or tomorrow\n"
-            "`!upcoming <days>` — Due within N days (e.g. `!upcoming 14`)"
+            "`!uni assignments` — All upcoming assignments\n"
+            "`!uni today` — Due today or tomorrow\n"
+            "`!uni upcoming <days>` — Due within N days (e.g. `!uni upcoming 14`)"
         ),
         inline=False,
     )
     embed.add_field(
         name="✅ Completing Assignments",
         value=(
-            "`!done` — Show list to mark assignments complete\n"
-            "`!done <number>` — Mark done (stops reminders)\n"
-            "`!uncomplete` — Show completed assignments\n"
-            "`!uncomplete <number>` — Restore reminders"
+            "`!uni done` — Show list to mark assignments complete\n"
+            "`!uni done <number>` — Mark done (stops reminders)\n"
+            "`!uni uncomplete` — Show completed assignments\n"
+            "`!uni uncomplete <number>` — Restore reminders"
         ),
         inline=False,
     )
@@ -476,13 +476,13 @@ async def help_cmd(ctx):
             "Reminders are sent automatically via DM at:\n"
             "📅 1 week before · 📆 3 days before · ⏰ 1 day before · 🔴 Day of\n"
             "🗓️ **Weekly digest** every Monday morning with your week's assignments\n"
-            "Customise with `!reminders`"
+            "Customise with `!uni reminders`"
         ),
         inline=False,
     )
     embed.add_field(
         name="🛠️ Testing",
-        value="`!test` — Send a test reminder to confirm your setup is working",
+        value="`!uni test` — Send a test reminder to confirm your setup is working",
         inline=False,
     )
     embed.add_field(
@@ -490,7 +490,7 @@ async def help_cmd(ctx):
         value=(
             "1. Open Canvas → **Calendar**\n"
             "2. Click **Calendar Feed** (bottom-right)\n"
-            "3. Copy the `.ics` URL and run `!setup <url>`\n"
+            "3. Copy the `.ics` URL and run `!uni setup <url>`\n"
             "*(Your URL is deleted from chat immediately)*"
         ),
         inline=False,

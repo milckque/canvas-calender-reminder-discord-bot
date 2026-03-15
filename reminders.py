@@ -225,7 +225,7 @@ class ReminderScheduler:
                 value=f"[Open in Canvas]({assignment['url']})",
                 inline=False,
             )
-        embed.set_footer(text="Canvas Reminder Bot • !assignments to see all upcoming work")
+        embed.set_footer(text="Canvas Reminder Bot • !uni assignments to see all upcoming work")
         return embed
 
     @staticmethod
@@ -247,7 +247,7 @@ class ReminderScheduler:
             embed.description = "\n".join(lines)
             embed.set_footer(
                 text=f"{len(assignments)} assignment{'s' if len(assignments) != 1 else ''} due this week • "
-                     "!done <number> to mark complete"
+                     "!uni done <number> to mark complete"
             )
 
         return embed
